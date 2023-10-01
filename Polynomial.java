@@ -1,6 +1,12 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.PrintStream;
+
+
 public class Polynomial {
     double[] coefficients;
-
+    int[] degrees;
     private static double power(double a, int b){
         double res = 1;
         for(int i=1;i<=b;++i){
@@ -9,44 +15,123 @@ public class Polynomial {
         return res;
     }
 
+
+    private static String ReadFile(File f) throws Exception{
+        BufferedReader b = new BufferedReader(new FileReader(f));
+        String line = b.readLine();
+        b.close();
+        return line;
+    }
+
+
     public Polynomial(){
-        this.coefficients = new double[1005];
+        this.coefficients = new double[10005];
+        this.degrees = new int[10005];
         for (int i = 0; i < this.coefficients.length; i++) {
             this.coefficients[i] = 0;
+        }
+        for (int i = 0; i < this.degrees.length; i++){
+            this.degrees[i] = 0;
         }
     }
 
 
-    public Polynomial(double[] coefficients){
+    public Polynomial(double[] coefficients, int[] degrees){
         this.coefficients = coefficients.clone();
+        this.degrees = degrees.clone();
+    }
+
+
+    public Polynomial(File f){
+        try{
+            String raw_data = ReadFile(f);
+            String[] data = raw_data.split("\\+|-");
+            int[] degrees = new int[10005];
+            double[] coefficients = new double[10005];
+            int t = 0;
+            for(int i=0;i<data.length;++i){
+                if(data[i].contains("x")){
+                    String[] s = data[i].split("x");
+                    if(data[i].indexOf("x") == 0){
+                        coefficients[t] = 1;
+                        if(data[i].length() == 1){
+                            degrees[t] = 1;
+                        }else{
+                            degrees[t] = Integer.parseInt(s[0]);
+                        }
+                        t+=1;
+                    }else{
+                        coefficients[t] = Double.parseDouble(s[0]);
+                        if(s.length == 1){
+                            degrees[t] = 1;
+                        }else{
+                            degrees[t] = Integer.parseInt(s[1]);
+                        }
+                        t+=1;
+                    }
+                }else{
+                    degrees[t] = 0;
+                    coefficients[t] = Double.parseDouble(data[i]);
+                    t += 1;
+                }
+            }
+            this.coefficients = new double[coefficients.length];
+            this.degrees = new int[degrees.length];
+            for(int i=0;i<t;++i){
+                if(coefficients[i] != 0){
+                    this.coefficients[i] = coefficients[i];
+                    this.degrees[i] = degrees[i];
+                }
+            }
+        }catch(Exception e){
+            System.out.println("failed on reading from file!");
+        }
     }
 
 
     public Polynomial add(Polynomial a){
         int length = Math.max(this.coefficients.length, a.coefficients.length);
-        double[] new_polynomial = new double[length];
-        for(int i=0;i<length;++i){
-            new_polynomial[i] = 0;
-            if(i >= length){
-                continue;
+        double[] new_coefficients = new double[length];
+        int[] new_degrees = new int[length];
+        int j=0, k=0, n=0, flag = 0, sum=0;
+        for(int i=0;j<this.degrees.length || k<a.degrees.length;++i){
+            flag = 0;
+            sum=0;
+            if(j<this.degrees.length){
+                if(i == this.degrees[j]){
+                    sum += this.coefficients[j];
+                    j++;
+                    flag = 1;
+                }
             }
-            if(i < this.coefficients.length){
-                new_polynomial[i] += this.coefficients[i];
+            if(k<a.degrees.length){
+                if(i == a.degrees[k]){
+                    sum += a.coefficients[k];
+                    k++;
+                    flag = 1;
+                }
             }
-            if(i < a.coefficients.length){
-                new_polynomial[i] += a.coefficients[i];
+            if(flag == 1&&sum != 0){
+                new_coefficients[n] = sum;
+                new_degrees[n] = i;
+                n += 1;
             }
         }
-        return new Polynomial(new_polynomial);
+        // double[] coefficients = new double[n];
+        // int[] degrees = new int[n];
+        // int t=0;
+        // for(int i=0;i<10005;++i){
+        //     if(new_coefficients[i])
+        // }
+        Polynomial new_Polynomial = new Polynomial(new_coefficients, new_degrees);
+        return new_Polynomial;
     }
 
 
     public double evaluate(double x){
         double res = 0, t = 0;
-        for(int i=0;i<this.coefficients.length;++i){
-            if(this.coefficients[i] == 0)
-                continue;
-            t = power(x, i);
+        for(int i=0;i<this.degrees.length;++i){
+            t = power(x, this.degrees[i]);
             res += this.coefficients[i] * t;
         }
         return res;
@@ -58,5 +143,72 @@ public class Polynomial {
             return true;
         }
         return false;
+    }
+
+
+    public Polynomial multiply(Polynomial a){
+        double[] res = new double[20011];
+        int[] flag = new int[20011];
+        for(int i=0;i<10005;++i){
+            res[i] = 0;
+        }
+        int t=0, new_length = 0;
+        for(int i=0;i<this.degrees.length;++i){
+            for(int j=0;j<a.degrees.length;++j){
+                t = this.degrees[i] + a.degrees[j];
+                if(flag[t] == 0){
+                    new_length += 1;
+                    flag[t] = 1;
+                }
+                res[t] += this.coefficients[i] * a.coefficients[j];
+                if(res[t] == 0){
+                    new_length -= 1;
+                    flag[t] = 0;
+                }
+            }
+        }
+        double[] new_coefficients = new double[new_length];
+        int[] new_degrees = new int[new_length];
+        t = 0;
+        for(int i=0;i<20011;++i){
+            if(flag[i] == 1){
+                new_degrees[t] = i;
+                new_coefficients[t] = res[i];
+                t += 1;
+            }
+        }
+        Polynomial new_Polynomial = new Polynomial(new_coefficients, new_degrees);
+        return new_Polynomial;
+    }
+
+
+    public void saveToFile(String filepath){
+        try{
+            PrintStream ps = new PrintStream(filepath);
+            String output = "";
+            String t = "";
+            for(int i=0;i<this.degrees.length;++i){
+                t = "";
+                if(this.coefficients[i] != 0){
+                    t = Double.toString(this.coefficients[i]);
+                    if(this.degrees[i] != 0){
+                        t += "x";
+                        if(this.degrees[i] != 1){
+                            t += Integer.toString(this.degrees[i]);
+                        }
+                    }
+                    if(i != 0){
+                        if(this.coefficients[i] > 0){
+                            output += "+";
+                        }
+                    }
+                }
+                output += t;
+            }
+            ps.println(output);
+            ps.close();
+        }catch(Exception e){
+            System.out.println("failed on saving!");
+        }
     }
 }
