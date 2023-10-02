@@ -46,40 +46,51 @@ public class Polynomial {
         try{
             String raw_data = ReadFile(f);
             String[] data = raw_data.split("\\+|-");
-            int[] degrees = new int[10005];
-            double[] coefficients = new double[10005];
-            int t = 0;
+            int[] degrees = new int[data.length];
+            double[] coefficients = new double[data.length];
+            int t = 0, index = 0, degree = 0;
             double coefficient = 0;
             for(int i=0;i<data.length;++i){
+                coefficient = 0;
+                degree = 0;
                 if(data[i].contains("x")){
-                    String[] s = data[i].split("x");
-                    coefficient = 0;
-                    if(data[i].indexOf("x") == 0){
+                    if(data[i].length() == 1){
                         coefficient = 1;
-                        if(data[i].length() == 1){
-                            degrees[t] = 1;
-                        }else{
-                            degrees[t] = Integer.parseInt(s[0]);
-                        }
+                        degree = 1;
                     }else{
-                        coefficient = Double.parseDouble(s[0]);
-                        if(s.length == 1){
-                            degrees[t] = 1;
+                        String[] s = data[i].split("x");
+                        coefficient = 0;
+                        if(data[i].indexOf("x") == 0){
+                            coefficient = 1;
+                            degree = Integer.parseInt(s[1]);
+                        }else if(data[i].indexOf("x") == data[i].length() - 1){
+                            coefficient = Double.parseDouble(s[0]);
+                            degree = 1;
                         }else{
-                            degrees[t] = Integer.parseInt(s[1]);
+                            coefficient = Double.parseDouble(s[0]);
+                            if(s.length == 1){
+                                degree = 1;
+                            }else{
+                                degree = Integer.parseInt(s[1]);
+                            }
                         }
                     }
+                    
                 }else{
-                    degrees[t] = 0;
+                    degree = 0;
                     coefficient = Double.parseDouble(data[i]);
                 }
                 if(coefficient != 0){
-                    int index = raw_data.indexOf(data[i]);
-                    if(index > 0 && raw_data.charAt(index - 1) == '-'){
-                        coefficient *= -1;
+                    index = raw_data.indexOf(data[i]);
+                    if(index > 0){
+                        if(raw_data.charAt(index - 1) == '-'){
+                            coefficient *= -1;
+                        }
                     }
                     coefficients[t] = coefficient;
-                    t += 1; 
+                    degrees[t] = degree;
+                    t += 1;
+                    
                 }
             }
             this.coefficients = new double[coefficients.length];
@@ -197,7 +208,9 @@ public class Polynomial {
             for(int i=0;i<this.degrees.length;++i){
                 t = "";
                 if(this.coefficients[i] != 0){
-                    t = Double.toString(this.coefficients[i]);
+                    if(this.coefficients[i] != 1&&this.coefficients[i] != -1){
+                        t = Double.toString(this.coefficients[i]);
+                    }
                     if(this.degrees[i] != 0){
                         t += "x";
                         if(this.degrees[i] != 1){
@@ -207,6 +220,8 @@ public class Polynomial {
                     if(i != 0){
                         if(this.coefficients[i] > 0){
                             output += "+";
+                        }else{
+                            output += "-";
                         }
                     }
                 }
