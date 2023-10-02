@@ -49,30 +49,37 @@ public class Polynomial {
             int[] degrees = new int[10005];
             double[] coefficients = new double[10005];
             int t = 0;
+            double coefficient = 0;
             for(int i=0;i<data.length;++i){
                 if(data[i].contains("x")){
                     String[] s = data[i].split("x");
+                    coefficient = 0;
                     if(data[i].indexOf("x") == 0){
-                        coefficients[t] = 1;
+                        coefficient = 1;
                         if(data[i].length() == 1){
                             degrees[t] = 1;
                         }else{
                             degrees[t] = Integer.parseInt(s[0]);
                         }
-                        t+=1;
                     }else{
-                        coefficients[t] = Double.parseDouble(s[0]);
+                        coefficient = Double.parseDouble(s[0]);
                         if(s.length == 1){
                             degrees[t] = 1;
                         }else{
                             degrees[t] = Integer.parseInt(s[1]);
                         }
-                        t+=1;
                     }
                 }else{
                     degrees[t] = 0;
-                    coefficients[t] = Double.parseDouble(data[i]);
-                    t += 1;
+                    coefficient = Double.parseDouble(data[i]);
+                }
+                if(coefficient != 0){
+                    int index = raw_data.indexOf(data[i]);
+                    if(index > 0 && raw_data.charAt(index - 1) == '-'){
+                        coefficient *= -1;
+                    }
+                    coefficients[t] = coefficient;
+                    t += 1; 
                 }
             }
             this.coefficients = new double[coefficients.length];
